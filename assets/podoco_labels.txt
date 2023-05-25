@@ -1,0 +1,16 @@
+0 Tomato Healthy 
+1 Tomato Septoria Leaf Spot 
+2 Tomato Bacterial Spot 
+3 Tomato Blight 
+4 Cabbage Healthy 
+5 Tomato Spider Mite 
+6 Tomato Leaf Mold 
+7 Tomato_Yellow Leaf Curl Virus 
+8 Soy_Frogeye_Leaf_Spot 
+9 Soy_Downy_Mildew 
+10 Maize_Ravi_Corn_Rust 
+11 Maize_Healthy 
+12 Maize_Grey_Leaf_Spot 
+13 Maize_Lethal_Necrosis 
+14 Soy_Healthy 
+15 Cabbage Black Rot
