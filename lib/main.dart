@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:podoco_plant_diesease_classifier/classifier/classifier.dart';
-import 'package:podoco_plant_diesease_classifier/classifier/utils.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 void main() {
@@ -18,6 +17,7 @@ class PodocoApp extends StatefulWidget {
 
 class _PodocoAppState extends State<PodocoApp> {
   var _model;
+  var _labels;
   final ImagePicker _imagePicker = ImagePicker();
   var _selectedImage;
 
@@ -29,7 +29,7 @@ class _PodocoAppState extends State<PodocoApp> {
 
   void _loadModel() async{
     _model = await PodocoClassifierModel.createModel();
-    PodocoClassifierModel.loadLabels();
+    _labels = await PodocoClassifierModel.loadLabels();
   }
 
   void _pickImage() async {
@@ -54,12 +54,10 @@ class _PodocoAppState extends State<PodocoApp> {
    */
   Future<TensorImage> _preProcessInput(var image) async {
 
-    print("Step 1");
     // # TensorImage is created and load Image
     final inputTensor = TensorImage.fromFile(image);
     //inputTensor.
 
-    print("Step 2");
     // # Crop Image to have square image
     final minLength = min(inputTensor.height, inputTensor.width);
     final cropOp = ResizeWithCropOrPadOp(minLength, minLength);
@@ -77,16 +75,32 @@ class _PodocoAppState extends State<PodocoApp> {
         .add(resizeOp)
         .add(normalizeOp)
         .build();
-    print("Step 3");
     imageProcessor.process(inputTensor);
 
     // #6
     return inputTensor;
   }
 
+  _postProcessOutput(TensorBuffer outputBuffer){
+    final probabilityProcessor = TensorProcessorBuilder().build();
+    probabilityProcessor.process(outputBuffer);
+    final results = TensorLabel.fromList(_labels, outputBuffer);
+
+    final labelList = [];
+    results.getMapWithFloatValue().forEach((key, value){
+      print("Label $key - Score $value");
+    });
+  }
+
   void _classifyImage(imageFile) async {
     final inputTensorImage = await _preProcessInput(imageFile);
-    print(inputTensorImage);
+
+    final outputBuffer = TensorBuffer.createFixedSize(_model.outputShape, _model.outputType);
+    _model.interpreter.run(inputTensorImage.buffer, outputBuffer.buffer);
+
+    print('OutputBuffer: ${outputBuffer.getDoubleList()}');
+
+    _postProcessOutput(outputBuffer);
   }
 
   @override
