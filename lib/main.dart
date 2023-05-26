@@ -21,20 +21,29 @@ class _PodocoAppState extends State<PodocoApp> {
   final ImagePicker _imagePicker = ImagePicker();
   var _selectedImage;
 
+  bool _resultStatus = false;
+  var _plantLabel;
+  var _plantScore;
+
   @override
   void initState() {
     super.initState();
     _loadModel();
   }
 
-  void _loadModel() async{
+  @override
+  void dispose() async {
+    super.dispose();
+  }
+
+  void _loadModel() async {
     _model = await PodocoClassifierModel.createModel();
     _labels = await PodocoClassifierModel.loadLabels();
   }
 
-  void _pickImage() async {
+  void _pickImage(ImageSource imageSource) async {
     final XFile? image =
-        await _imagePicker.pickImage(source: ImageSource.gallery);
+        await _imagePicker.pickImage(source: imageSource);
 
     if (image == null) return;
 
@@ -53,7 +62,6 @@ class _PodocoAppState extends State<PodocoApp> {
    * 
    */
   Future<TensorImage> _preProcessInput(var image) async {
-
     // # TensorImage is created and load Image
     final inputTensor = TensorImage.fromFile(image);
     //inputTensor.
@@ -81,26 +89,44 @@ class _PodocoAppState extends State<PodocoApp> {
     return inputTensor;
   }
 
-  _postProcessOutput(TensorBuffer outputBuffer){
+  _postProcessOutput(TensorBuffer outputBuffer) {
     final probabilityProcessor = TensorProcessorBuilder().build();
     probabilityProcessor.process(outputBuffer);
     final results = TensorLabel.fromList(_labels, outputBuffer);
 
-    final labelList = [];
-    results.getMapWithFloatValue().forEach((key, value){
+    final labelScoreList = [];
+    results.getMapWithFloatValue().forEach((key, value) {
+      labelScoreList.add(LabelScore(label: key, score: value));
       print("Label $key - Score $value");
     });
+
+    labelScoreList.sort((item1, item2) => item2.score > item1.score ? 1 : -1);
+
+    return labelScoreList
+        .first; // because first item is always cabbage healthy # False True Result
   }
 
   void _classifyImage(imageFile) async {
     final inputTensorImage = await _preProcessInput(imageFile);
 
-    final outputBuffer = TensorBuffer.createFixedSize(_model.outputShape, _model.outputType);
+    final outputBuffer =
+        TensorBuffer.createFixedSize(_model.outputShape, _model.outputType);
     _model.interpreter.run(inputTensorImage.buffer, outputBuffer.buffer);
 
     print('OutputBuffer: ${outputBuffer.getDoubleList()}');
 
-    _postProcessOutput(outputBuffer);
+    var result = _postProcessOutput(outputBuffer);
+    print(result.label);
+    print(result.score);
+
+    final resultStatus =
+        result.score >= 0.8 ? ResultStatus.found : ResultStatus.notFound;
+
+    setState(() {
+      _resultStatus = resultStatus;
+      _plantLabel = result.label;
+      _plantScore = result.score;
+    });
   }
 
   @override
@@ -126,9 +152,24 @@ class _PodocoAppState extends State<PodocoApp> {
                         : const Text(
                             "Please select an image that contains plant")),
                 Container(
+                  child: _selectedImage != null
+                      ? _resultStatus
+                          ? Text("$_plantLabel - $_plantScore")
+                          : const Text("Can't Classify")
+                      : null,
+                ),
+                Container(
                   child: ElevatedButton(
                       onPressed: () {
-                        _pickImage();
+                        _pickImage(ImageSource.camera);
+                      },
+                      child: const Text("Take from Camera")),
+                ),
+
+                Container(
+                  child: ElevatedButton(
+                      onPressed: () {
+                        _pickImage(ImageSource.gallery);
                       },
                       child: const Text("Choose Image From Gallery")),
                 )

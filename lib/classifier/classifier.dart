@@ -20,6 +20,7 @@ class PodocoClassifierModel {
     required this.outputType,
   });
 
+
   static createModel() async {
     final interpreter = await Interpreter.fromAsset(modelFileName);
 
@@ -54,6 +55,16 @@ class PodocoClassifierModel {
     print('Labels: $labels');
     return labels;
   }
+}
 
-  
+class LabelScore {
+  var label;
+  var score;
+
+  LabelScore({required this.label, required this.score});
+}
+
+class ResultStatus{
+  static const found = true;
+  static const notFound = false;
 }
