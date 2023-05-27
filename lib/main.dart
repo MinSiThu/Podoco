@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:podoco_plant_diesease_classifier/classifier/classifier.dart';
+import 'package:podoco_plant_diesease_classifier/components/Header.dart';
+import 'package:podoco_plant_diesease_classifier/components/ResultTextBox.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 void main() {
@@ -22,8 +24,7 @@ class _PodocoAppState extends State<PodocoApp> {
   var _selectedImage;
 
   bool _resultStatus = false;
-  var _plantLabel;
-  var _plantScore;
+  late LabelScore _labelScore;
 
   @override
   void initState() {
@@ -71,11 +72,10 @@ class _PodocoAppState extends State<PodocoApp> {
 
     // # Resize Image to model input shape
     final shapeLength = _model.inputShape[1];
-    final resizeOp = ResizeOp(shapeLength,shapeLength, ResizeMethod.BILINEAR);
+    final resizeOp = ResizeOp(shapeLength, shapeLength, ResizeMethod.BILINEAR);
 
     // # Normalize Image, 127.5 is used cause model, to have -1 to 1
     final normalizeOp = NormalizeOp(224, 224);
-
 
     // # ImageProcessor and add Operations
     final imageProcessor = ImageProcessorBuilder()
@@ -109,7 +109,6 @@ class _PodocoAppState extends State<PodocoApp> {
   void _classifyImage(imageFile) async {
     print("Preprocess");
     final inputTensorImage = await _preProcessInput(imageFile);
-    inputTensorImage.tensorBuffer.resize([1,244,244,3]);
 
     print(inputTensorImage.tensorBuffer.shape);
 
@@ -130,8 +129,7 @@ class _PodocoAppState extends State<PodocoApp> {
 
     setState(() {
       _resultStatus = resultStatus;
-      _plantLabel = result.label;
-      _plantScore = result.score;
+      _labelScore = LabelScore(label: result.label,score:result.score);
     });
   }
 
@@ -143,42 +141,61 @@ class _PodocoAppState extends State<PodocoApp> {
         fontFamily: 'Georgia',
       ),
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-          appBar: AppBar(
-            title: const Text("Podoco - Plant Disease Classifier"),
-          ),
-          body: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                    height: 300,
-                    width: 300,
-                    child: _selectedImage != null
-                        ? Image.file(_selectedImage, fit: BoxFit.cover)
-                        : const Text(
-                            "Please select an image that contains plant")),
-                Container(
-                  child: _selectedImage != null
-                      ? _resultStatus
-                          ? Text("$_plantLabel - $_plantScore")
-                          : const Text("Can't Classify")
-                      : null,
-                ),
-                Container(
-                  child: ElevatedButton(
-                      onPressed: () {
-                        _pickImage(ImageSource.camera);
-                      },
-                      child: const Text("Take from Camera")),
-                ),
-                Container(
-                  child: ElevatedButton(
-                      onPressed: () {
-                        _pickImage(ImageSource.gallery);
-                      },
-                      child: const Text("Choose Image From Gallery")),
-                )
-              ])),
+      home: SafeArea(
+              child: Scaffold(
+            body: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Header(),
+                    Container(
+                        child: Column(
+                          children: [
+                      Center(child: Container(
+                          height: 300,
+                          width: 300,
+                          child: _selectedImage != null
+                              ? Image.file(_selectedImage, fit: BoxFit.cover)
+                              : const Text(
+                                  "Please select an image that contains plant"))),
+                      Center(child: Container(
+                        child: _selectedImage != null
+                            ? _resultStatus
+                                ? ResultTextBox(labelScore: _labelScore)
+                                : const Text("Can't Classify")
+                            : null,
+                      ),)
+                    ])),
+                    Container(
+                        child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          color: Colors.indigoAccent,
+                          padding: const EdgeInsets.all(20),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          child: InkWell(
+                              onTap: () {
+                                _pickImage(ImageSource.camera);
+                              },
+                              child: const Center(child: Text("Take from Camera"))),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          color: Colors.greenAccent,
+                          padding: const EdgeInsets.all(20),
+                          child: InkWell(
+                              onTap: () {
+                                _pickImage(ImageSource.gallery);
+                              },
+                              child: const Center(child: Text("Choose from Gallery"))),
+                        ),
+                      ],
+                    ))
+                  ]),
+            )),
+      ),
     );
   }
 }
