@@ -42,8 +42,7 @@ class _PodocoAppState extends State<PodocoApp> {
   }
 
   void _pickImage(ImageSource imageSource) async {
-    final XFile? image =
-        await _imagePicker.pickImage(source: imageSource);
+    final XFile? image = await _imagePicker.pickImage(source: imageSource);
 
     if (image == null) return;
 
@@ -72,10 +71,11 @@ class _PodocoAppState extends State<PodocoApp> {
 
     // # Resize Image to model input shape
     final shapeLength = _model.inputShape[1];
-    final resizeOp = ResizeOp(shapeLength, shapeLength, ResizeMethod.BILINEAR);
+    final resizeOp = ResizeOp(shapeLength,shapeLength, ResizeMethod.BILINEAR);
 
     // # Normalize Image, 127.5 is used cause model, to have -1 to 1
-    final normalizeOp = NormalizeOp(127.5, 127.5);
+    final normalizeOp = NormalizeOp(224, 224);
+
 
     // # ImageProcessor and add Operations
     final imageProcessor = ImageProcessorBuilder()
@@ -107,12 +107,18 @@ class _PodocoAppState extends State<PodocoApp> {
   }
 
   void _classifyImage(imageFile) async {
+    print("Preprocess");
     final inputTensorImage = await _preProcessInput(imageFile);
+    inputTensorImage.tensorBuffer.resize([1,244,244,3]);
 
+    print(inputTensorImage.tensorBuffer.shape);
+
+    print("Pre Predict");
     final outputBuffer =
         TensorBuffer.createFixedSize(_model.outputShape, _model.outputType);
     _model.interpreter.run(inputTensorImage.buffer, outputBuffer.buffer);
 
+    print("Pre PostProcess");
     print('OutputBuffer: ${outputBuffer.getDoubleList()}');
 
     var result = _postProcessOutput(outputBuffer);
@@ -165,7 +171,6 @@ class _PodocoAppState extends State<PodocoApp> {
                       },
                       child: const Text("Take from Camera")),
                 ),
-
                 Container(
                   child: ElevatedButton(
                       onPressed: () {

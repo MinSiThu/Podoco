@@ -2,7 +2,7 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 const labelFileName = 'assets/podoco_labels.txt';
-const modelFileName = 'podoco_model.tflite';
+const modelFileName = 'plant_model2.tflite';
 
 class PodocoClassifierModel {
   Interpreter interpreter; // to predict results
@@ -36,6 +36,9 @@ class PodocoClassifierModel {
 
     print('Input type: $inputType');
     print('Output type: $outputType');
+
+    interpreter.resizeInputTensor(0, [ 224, 224, 3]);
+    interpreter.allocateTensors();
 
     return PodocoClassifierModel(
         interpreter: interpreter,

@@ -1,10 +1,10 @@
 # Podoco - Plant Disease Classifier App
 
 Flutter App that can classify plant diseases offline, using tflite.
-Supports Burmese & English Language
+
 
 ## References
 
-Howard, A. G., Zhu, M., Chen, B., Kalenichenko, D., Wang, W., Weyand, T., … Adam, H. (2017). MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications. Retrieved from [http://arxiv.org/abs/1704.04861](http://arxiv.org/abs/1704.04861)
+[1] Hughes, David P., and Marcel Salathe. “An Open Access Repository of Images on Plant Health to Enable the Development of Mobile Disease Diagnostics.” ArXiv:1511.08060 [Cs], Apr. 2016. arXiv.org, [http://arxiv.org/abs/1511.08060](http://arxiv.org/abs/1511.08060).
 
 
