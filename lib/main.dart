@@ -38,8 +38,9 @@ class _PodocoAppState extends State<PodocoApp> {
   }
 
   void _loadModel() async {
-    _model = await PodocoClassifierModel.createModel();
     _labels = await PodocoClassifierModel.loadLabels();
+    _model = await PodocoClassifierModel.createModel(_labels);
+    
   }
 
   void _pickImage(ImageSource imageSource) async {
@@ -55,74 +56,8 @@ class _PodocoAppState extends State<PodocoApp> {
     _classifyImage(imageFile);
   }
 
-  /*
-   * tensorImage loads into inputTensor,
-   * Image Preprocessor is built
-   * inputTensor is preprocess
-   * 
-   */
-  Future<TensorImage> _preProcessInput(var image) async {
-    // # TensorImage is created and load Image
-    final inputTensor = TensorImage.fromFile(image);
-    //inputTensor.
-
-    // # Crop Image to have square image
-    final minLength = min(inputTensor.height, inputTensor.width);
-    final cropOp = ResizeWithCropOrPadOp(minLength, minLength);
-
-    // # Resize Image to model input shape
-    final shapeLength = _model.inputShape[1];
-    final resizeOp = ResizeOp(shapeLength, shapeLength, ResizeMethod.BILINEAR);
-
-    // # Normalize Image, 127.5 is used cause model, to have -1 to 1
-    final normalizeOp = NormalizeOp(224, 224);
-
-    // # ImageProcessor and add Operations
-    final imageProcessor = ImageProcessorBuilder()
-        .add(cropOp)
-        .add(resizeOp)
-        .add(normalizeOp)
-        .build();
-    imageProcessor.process(inputTensor);
-
-    // #6
-    return inputTensor;
-  }
-
-  _postProcessOutput(TensorBuffer outputBuffer) {
-    final probabilityProcessor = TensorProcessorBuilder().build();
-    probabilityProcessor.process(outputBuffer);
-    final results = TensorLabel.fromList(_labels, outputBuffer);
-
-    final labelScoreList = [];
-    results.getMapWithFloatValue().forEach((key, value) {
-      labelScoreList.add(LabelScore(label: key, score: value));
-      print("Label $key - Score $value");
-    });
-
-    labelScoreList.sort((item1, item2) => item2.score > item1.score ? 1 : -1);
-
-    return labelScoreList
-        .first; // because first item is always cabbage healthy # False True Result
-  }
-
   void _classifyImage(imageFile) async {
-    print("Preprocess");
-    final inputTensorImage = await _preProcessInput(imageFile);
-
-    print(inputTensorImage.tensorBuffer.shape);
-
-    print("Pre Predict");
-    final outputBuffer =
-        TensorBuffer.createFixedSize(_model.outputShape, _model.outputType);
-    _model.interpreter.run(inputTensorImage.buffer, outputBuffer.buffer);
-
-    print("Pre PostProcess");
-    print('OutputBuffer: ${outputBuffer.getDoubleList()}');
-
-    var result = _postProcessOutput(outputBuffer);
-    print(result.label);
-    print(result.score);
+    var result = _model.classify(imageFile);
 
     final resultStatus =
         result.score >= 0.8 ? ResultStatus.found : ResultStatus.notFound;
