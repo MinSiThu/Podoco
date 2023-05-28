@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:podoco_plant_diesease_classifier/classifier/classifier.dart';
 import 'package:podoco_plant_diesease_classifier/components/Header.dart';
 import 'package:podoco_plant_diesease_classifier/components/ResultTextBox.dart';
-import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
+import 'package:podoco_plant_diesease_classifier/translations/languages.dart';
 
 void main() {
   runApp(PodocoApp());
@@ -57,7 +57,7 @@ class _PodocoAppState extends State<PodocoApp> {
   }
 
   void _classifyImage(imageFile) async {
-    var result = _model.classify(imageFile);
+    var result = await _model.classify(imageFile);
 
     final resultStatus =
         result.score >= 0.8 ? ResultStatus.found : ResultStatus.notFound;
@@ -70,7 +70,9 @@ class _PodocoAppState extends State<PodocoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
+      translations: Languages(),
+      locale: const Locale("en","US"),
       theme: ThemeData(
         primaryColor: Colors.greenAccent,
         fontFamily: 'Georgia',
