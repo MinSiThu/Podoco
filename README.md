@@ -2,11 +2,9 @@
 
 Flutter App that can classify cassava plant diseases offline, using tflite.
 
-![Main Page](/screenshots/main2.jpg =100x350) 
-
-![Main Page with Image](/screenshots/main.jpg =100x350)
-
-![About Page](screenshots/about.jpg =100x350)
+<img src="/screenshots/main2.jpg" width='100' height="350">
+<img src="/screenshots/main.jpg" width='100' height="350">
+<img src="/screenshots/about.jpg" width='100' height="350">
 
 ## About Model
 
